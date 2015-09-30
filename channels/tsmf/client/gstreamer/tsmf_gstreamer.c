@@ -803,6 +803,7 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 	const char *blank = ""; 
 	printf("%s", blank);
 
+	BOOL hwaccvaapi = FALSE;
 	BOOL hwaccelflu = FALSE;
 	BOOL hwaccelomx = FALSE;
 
@@ -876,6 +877,13 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 			break;
 		case TSMF_SUB_TYPE_WVC1:
 		case TSMF_SUB_TYPE_WMV3:
+			mdecoder->decbin = gst_element_factory_make ("vaapidecode", "decoder");
+			if (mdecoder->decbin)
+			{
+				hwaccvaapi = TRUE;
+				break;
+			}
+
 			mdecoder->decbin = gst_element_factory_make ("fluvadec", NULL);
 			if (mdecoder->decbin)
 			{
@@ -901,6 +909,12 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 			break;
 		case TSMF_SUB_TYPE_AVC1:
 		case TSMF_SUB_TYPE_H264:
+			mdecoder->decbin = gst_element_factory_make ("vaapidecode", "decoder");
+			if (mdecoder->decbin)
+			{
+				hwaccvaapi = TRUE;
+				break;
+			}
 			mdecoder->decbin = gst_element_factory_make ("fluvadec", NULL);
 			if (mdecoder->decbin)
 			{
@@ -966,7 +980,12 @@ static BOOL tsmf_gstreamer_pipeline_build(TSMFGstreamerDecoder * mdecoder)
 		case TSMF_MAJOR_TYPE_VIDEO:
 		{
 			mdecoder->outbin = gst_bin_new ("videobin");
-			if (hwaccelflu)
+			if (hwaccvaapi)
+			{
+				mdecoder->outconv = gst_element_factory_make ("queue", "queuetosink");
+				mdecoder->outsink = gst_element_factory_make ("vaapisink", "videosink");
+			}
+			else if (hwaccelflu)
 			{
 				mdecoder->outconv = gst_element_factory_make ("queue", "queuetosink"); 
 				mdecoder->outsink = gst_element_factory_make ("fluvasink", "videosink");
@@ -1545,6 +1564,12 @@ static void tsmf_gstreamer_update_rendering_area(ITSMFDecoder * decoder, int new
 
 		if(mdecoder->subwin)
 		{
+			/*
+			 * Fixed playback video is black screen while using hardware decoder vaapi.
+			 * Because vaapi set then render size 1x1. MUST set window handle. 
+			 */
+			gst_x_overlay_set_window_handle (GST_X_OVERLAY (mdecoder->outsink), mdecoder->subwin);
+
 			XMoveWindow(mdecoder->disp, mdecoder->subwin, anewX, anewY);
 			if(newWidth > 0 && newHeight > 0) {
 				XResizeWindow(mdecoder->disp, mdecoder->subwin, newWidth, newHeight);
