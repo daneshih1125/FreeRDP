@@ -188,11 +188,13 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	xf_ResizeDesktopWindow(xfc, window, width, height);
-
+// It does't work on openbox
+#if 0
 	/* Set the fullscreen state */
 	xf_SendClientEvent(xfc, window->handle, xfc->_NET_WM_STATE, 4,
 				fullscreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE,
 				xfc->_NET_WM_STATE_FULLSCREEN, 0, 0);
+#endif
 
 	/* Only send monitor bounds if they are valid */
 	if ((xfc->fullscreenMonitors.top >= 0) &&

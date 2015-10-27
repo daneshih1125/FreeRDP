@@ -1055,6 +1055,8 @@ BOOL xf_pre_connect(freerdp* instance)
 #endif
 
 	xfc->fullscreen = settings->Fullscreen;
+	if (settings->Fullscreen || settings->UseMultimon)
+		settings->Decorations = FALSE;
 	xfc->decorations = settings->Decorations;
 	xfc->grab_keyboard = settings->GrabKeyboard;
 	xfc->fullscreen_toggle = settings->ToggleFullscreen;
