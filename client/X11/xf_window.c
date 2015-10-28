@@ -140,6 +140,19 @@ void xf_SendClientEvent(xfContext* xfc, Window window, Atom atom, unsigned int n
 
 void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 {
+#if 1
+	if (fullscreen)
+	{
+		rdpSettings* settings = xfc->settings;
+
+		xf_SetWindowDecorations(xfc, window->handle, FALSE);
+
+		XMoveResizeWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY, window->width, window->height);
+                XMapRaised(xfc->display, window->handle);
+		XMoveWindow(xfc->display, window->handle, settings->DesktopPosX, settings->DesktopPosY);
+	}
+
+#else
 	int i;
 	rdpSettings* settings = xfc->settings;
 	int startX, startY;
@@ -211,6 +224,7 @@ void xf_SetWindowFullscreen(xfContext* xfc, xfWindow* window, BOOL fullscreen)
 	}
 
 	XMoveWindow(xfc->display, window->handle, startX, startY);
+#endif
 }
 
 /* http://tronche.com/gui/x/xlib/window-information/XGetWindowProperty.html */
